@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Demo Page
+        </title>
+        <style>
+            #resultDiv{
+                border: 2px solid blue;
+                text-align: justify;
+                height: 300px;
+                width: 700px;
+                word-wrap: break-word;
+            }
+        </style>
+        <script>
+            function ReadMyData(){
+                var divObjeect = document.getElementById("resultDiv"); //Reference of the "Div" tab
+                var httpObject = new XMLHttpRequest();
+                httpObject.open("GET","https://reqres.in/api/users");
+                httpObject.send();
+                httpObject.onreadystatechange = function(request, response){
+                    if(httpObject.readyState===4 && httpObject.status===200){
+                        divObjeect.innerText = httpObject.responseText;
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Demo Page - Consuming a Fake REST API using JavaScript</h1>
+        <br>
+        <br>
+        <h3>The Fake API will be consumed when the below is clicked</h3>
+        <br>
+        <br>
+        <input type="button" value="Display Data" onclick="ReadMyData();">
+        <br>
+        <br>
+        <div id="resultDiv">
+        </div>
+    </body>
+</html>
