@@ -3,10 +3,10 @@ package demo.demo;
 import java.sql.Date;
 
 public class Person {
-    String name, email, bloodGroup, password;
-    long contactNo;
-    Date DOB;
-    float weight, height;
+    private String name, email, bloodGroup, password;
+    private long contactNo;
+    private Date DOB;
+    private float weight, height;
 
     public Person(String name, String email, String bloodGroup, long contactNo, Date DOB, float weight, float height) {
         this.name = name;
