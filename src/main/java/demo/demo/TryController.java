@@ -16,28 +16,32 @@ import java.util.ArrayList;
 @RestController
 public class TryController {
 
-    /*
-     * @RequestMapping("/display")
-     * 
-     * @ResponseBody public Person display() { return new Person("Harshil", "taps");
-     * }
-     * 
-     * @RequestMapping("/show")
-     * 
-     * @ResponseBody public ArrayList<user> show() { // Create a variable for the
-     * connection string. String connectionUrl =
-     * "jdbc:mysql://localhost:3307/final_project"; String user = "root"; String
-     * pass = "shubham07"; ArrayList<user> u1 = new ArrayList<user>(); try
-     * (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
-     * Statement stmt = con.createStatement();) { String SQL =
-     * "SELECT * FROM person"; ResultSet rs = stmt.executeQuery(SQL);
-     * 
-     * // Iterate through the data in the result set and display it. while
-     * (rs.next()) { u1.add(new user(rs.getString("name"), rs.getInt("age"))); }
-     * 
-     * } // Handle any errors that may have occurred. catch (SQLException e) {
-     * e.printStackTrace(); } return u1; }
-     */
+    @CrossOrigin(origins = "*")
+    @RequestMapping("/ShowUserDetails")
+    @ResponseBody
+    public Person show() { // Create a variable for the
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+        Person p1;
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            String SQL = "SELECT * FROM person where id in(select id from registration where LoggedIn like true)";
+            ResultSet rs = stmt.executeQuery(SQL);
+
+            // Iterate through the data in the result set and display it.
+            rs.next();
+            p1 = new Person(rs.getString("Name"), rs.getString("Email"), rs.getString("BloodGroup"),
+                    rs.getLong("ContactNo"), rs.getDate("DOB"), rs.getFloat("weight"), rs.getFloat("height"));
+            return p1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
     @CrossOrigin(origins = "*")
     @RequestMapping(method = RequestMethod.POST, value = "/Register")
     @ResponseBody
@@ -95,6 +99,39 @@ public class TryController {
         catch (SQLException e) {
             e.printStackTrace();
             return ResponseEntity.ok(new MessageResponse("Error!"));
+        }
+
+    }
+
+    @CrossOrigin(origins = "*")
+    @RequestMapping(method = RequestMethod.POST, value = "/AddDependent")
+    @ResponseBody
+    public ResponseEntity<?> addDependent(@RequestBody Dependent dItem) {
+        // Create a variable for the connection string.
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            String SQL = "insert into person(Name,Email,ContactNo,BloodGroup,DOB,weight,height) values ('"
+                    + dItem.getName() + "','" + dItem.getEmail() + "','" + dItem.getContactNo() + "','"
+                    + dItem.getBloodGroup() + "','" + dItem.getDOB() + "','" + dItem.getWeight() + "','"
+                    + dItem.getHeight() + "')";
+            stmt.executeUpdate(SQL);
+
+            String SQL1 = "insert into relationship(id,relation,did) values ((select id from registration where LoggedIn like true),'"
+                    + dItem.getRelationship() + "',(select id from person where Email like '" + dItem.getEmail()
+                    + "'))";
+            stmt.executeUpdate(SQL1);
+
+            return ResponseEntity.ok(new MessageResponse("Dependent Added successfully!"));
+        }
+        // Handle any errors that may have occurred.
+        catch (SQLException e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new MessageResponse("Email ID Already registered!"));
         }
 
     }
