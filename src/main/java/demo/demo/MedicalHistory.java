@@ -4,7 +4,7 @@ import java.sql.Date;
 import java.sql.Time;
 
 public class MedicalHistory {
-  private String illness, DoctorDetails, medicine, DosageAmount, DosageFrequency;
+  private String illness, DoctorDetails, medicine, DosageAmount, DosageFrequency, relation;
   private Date startDate, endDate;
   private Time DosageTime;
   private Boolean EmailNotification;
@@ -21,6 +21,14 @@ public class MedicalHistory {
     this.endDate = endDate;
     this.DosageTime = DosageTime;
     this.EmailNotification = EmailNotification;
+  }
+
+  public String getRelation() {
+    return this.relation;
+  }
+
+  public void setRelation(String relation) {
+    this.relation = relation;
   }
 
   // Getters and Setters for all data members
