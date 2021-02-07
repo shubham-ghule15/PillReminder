@@ -2,17 +2,14 @@ package demo.demo;
 
 import java.sql.Date;
 
-public class Person {
+public class UpdatePerson {
     private String name, email, bloodGroup, password;
     private long contactNo;
     private Date DOB;
     private float weight, height;
 
-    public Person() {
-
-    }
-
-    public Person(String name, String email, String bloodGroup, long contactNo, Date DOB, float weight, float height) {
+    public UpdatePerson(String name, String email, String bloodGroup, long contactNo, Date DOB, float weight,
+            float height) {
         this.name = name;
         this.email = email;
         this.bloodGroup = bloodGroup;
@@ -20,11 +17,6 @@ public class Person {
         this.DOB = DOB;
         this.weight = weight;
         this.height = height;
-    }
-
-    public Person(String name) {
-        this.name = name;
-
     }
 
     public String getName() {

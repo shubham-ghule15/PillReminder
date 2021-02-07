@@ -16,8 +16,9 @@ import java.util.ArrayList;
 @RestController
 public class TryController {
 
+    // Show logged in user's details
     @CrossOrigin(origins = "*")
-    @RequestMapping("/ShowUserDetails")
+    @RequestMapping(value = "/ShowUserDetails", method = { RequestMethod.POST, RequestMethod.GET })
     @ResponseBody
     public Person show() { // Create a variable for the
         String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
@@ -43,7 +44,33 @@ public class TryController {
     }
 
     @CrossOrigin(origins = "*")
-    @RequestMapping("/ShowDependentDetails")
+    @RequestMapping(value = "/GetPersonName", method = { RequestMethod.POST, RequestMethod.GET })
+    @ResponseBody
+    public Person getUserName() { // Create a variable for the
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+        Person p1;
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            String SQL = "SELECT Name FROM person where id in(select id from registration where LoggedIn like true)";
+            ResultSet rs = stmt.executeQuery(SQL);
+
+            // Iterate through the data in the result set and display it.
+            rs.next();
+            p1 = new Person(rs.getString("Name"));
+            return p1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    // Show dependents' details
+    @CrossOrigin(origins = "*")
+    @RequestMapping(value = "/ShowDependentDetails", method = { RequestMethod.POST, RequestMethod.GET })
     @ResponseBody
     public Person showDependent(@RequestBody SendDependentRelationship sItem) { // Create a variable for the
         String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
@@ -58,10 +85,14 @@ public class TryController {
             ResultSet rs = stmt.executeQuery(SQL);
 
             // Iterate through the data in the result set and display it.
-            rs.next();
-            p1 = new Person(rs.getString("Name"), rs.getString("Email"), rs.getString("BloodGroup"),
-                    rs.getLong("ContactNo"), rs.getDate("DOB"), rs.getFloat("weight"), rs.getFloat("height"));
-            return p1;
+            if (rs.next()) {
+                p1 = new Person(rs.getString("Name"), rs.getString("Email"), rs.getString("BloodGroup"),
+                        rs.getLong("ContactNo"), rs.getDate("DOB"), rs.getFloat("weight"), rs.getFloat("height"));
+                return p1;
+            } else {
+                Person p2 = new Person();
+                return p2;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -69,6 +100,7 @@ public class TryController {
 
     }
 
+    // Register new user
     @CrossOrigin(origins = "*")
     @RequestMapping(method = RequestMethod.POST, value = "/Register")
     @ResponseBody
@@ -101,6 +133,35 @@ public class TryController {
     }
 
     @CrossOrigin(origins = "*")
+    @RequestMapping(method = RequestMethod.PUT, value = "/UpdateUserData")
+    @ResponseBody
+    public ResponseEntity<?> update(@RequestBody UpdatePerson pItem) {
+        // Create a variable for the connection string.
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            String SQL = "update person set Name='" + pItem.getName() + "',Email ='" + pItem.getEmail()
+                    + "' ,ContactNo ='" + pItem.getContactNo() + "',BloodGroup ='" + pItem.getBloodGroup() + "',DOB ='"
+                    + pItem.getDOB() + "',weight ='" + pItem.getWeight() + "',height='" + pItem.getHeight()
+                    + "' where id in (select id from registration where LoggedIn like true)";
+            stmt.executeUpdate(SQL);
+
+            return ResponseEntity.ok(new MessageResponse("User updated successfully!"));
+        }
+        // Handle any errors that may have occurred.
+        catch (SQLException e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new MessageResponse("Error!"));
+        }
+
+    }
+
+    // Login
+    @CrossOrigin(origins = "*")
     @RequestMapping(method = RequestMethod.POST, value = "/Login")
     @ResponseBody
     public ResponseEntity<?> login(@RequestBody Login lItem) {
@@ -119,8 +180,9 @@ public class TryController {
             if (lItem.getPassword().equals(rs.getString("password"))) {
                 String SQL1 = "update registration set LoggedIn=true where id='" + rs.getString("id") + "'";
                 stmt.executeUpdate(SQL1);
+                return ResponseEntity.ok(new MessageResponse("User Logged In successfully!"));
             }
-            return ResponseEntity.ok(new MessageResponse("User Logged In successfully!"));
+            return ResponseEntity.ok(new MessageResponse("Wrong Password!"));
         }
         // Handle any errors that may have occurred.
         catch (SQLException e) {
@@ -130,6 +192,40 @@ public class TryController {
 
     }
 
+    @CrossOrigin(origins = "*")
+    @RequestMapping(method = RequestMethod.POST, value = "/ResetPassword")
+    @ResponseBody
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPassword pItem) {
+        // Create a variable for the connection string.
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            String SQL = "select * from registration where LoggedIn like true";
+            ResultSet rs = stmt.executeQuery(SQL);
+            rs.next();
+
+            if (pItem.getOldpassword().equals(rs.getString("Password"))) {
+                String SQL1 = "update registration set Password = '" + pItem.getNewpassword()
+                        + "' where LoggedIn like true";
+                stmt.executeUpdate(SQL1);
+                return ResponseEntity.ok(new MessageResponse("Password Updated successfully!"));
+            }
+
+            return ResponseEntity.ok(new MessageResponse("Enter correct current password!"));
+        }
+        // Handle any errors that may have occurred.
+        catch (SQLException e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new MessageResponse("Error!"));
+        }
+
+    }
+
+    // Add dependent
     @CrossOrigin(origins = "*")
     @RequestMapping(method = RequestMethod.POST, value = "/AddDependent")
     @ResponseBody
@@ -164,7 +260,37 @@ public class TryController {
     }
 
     @CrossOrigin(origins = "*")
-    @RequestMapping(method = RequestMethod.POST, value = "/Logout")
+    @RequestMapping(method = RequestMethod.PUT, value = "/UpdateDependent")
+    @ResponseBody
+    public ResponseEntity<?> UpdateDependent(@RequestBody Dependent dItem) {
+        // Create a variable for the connection string.
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            String SQL = "update person set Name='" + dItem.getName() + "',Email ='" + dItem.getEmail()
+                    + "' ,ContactNo ='" + dItem.getContactNo() + "',BloodGroup ='" + dItem.getBloodGroup() + "',DOB ='"
+                    + dItem.getDOB() + "',weight ='" + dItem.getWeight() + "',height='" + dItem.getHeight()
+                    + "' where id in(select did from relationship where relation like '" + dItem.getRelationship()
+                    + "' and id in(select id from registration where LoggedIn like true))";
+            stmt.executeUpdate(SQL);
+
+            return ResponseEntity.ok(new MessageResponse("Dependent Updated successfully!"));
+        }
+        // Handle any errors that may have occurred.
+        catch (SQLException e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new MessageResponse("Error!"));
+        }
+
+    }
+
+    // Logout
+    @CrossOrigin(origins = "*")
+    @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET }, value = "/Logout")
     @ResponseBody
     public ResponseEntity<?> logout() {
         // Create a variable for the connection string.
@@ -188,8 +314,9 @@ public class TryController {
 
     }
 
+    // Add medical history
     @CrossOrigin(origins = "*")
-    @RequestMapping(method = RequestMethod.POST, value = "/AddMedicalHistory")
+    @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET }, value = "/AddMedicalHistory")
     @ResponseBody
     public ResponseEntity<?> addMedicalHistory(@RequestBody MedicalHistory mItem) {
         // Create a variable for the connection string.
@@ -225,8 +352,9 @@ public class TryController {
 
     }
 
+    // Show medical history
     @CrossOrigin(origins = "*")
-    @RequestMapping("/ShowMedicalHistory")
+    @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET }, value = "/ShowMedicalHistory")
     @ResponseBody
     public MedicalHistory showMedicalHistory(@RequestBody MedicalHistory mItem) { // Create a variable for the
         String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
@@ -241,24 +369,34 @@ public class TryController {
                 ResultSet rs = stmt.executeQuery(SQL);
 
                 // Iterate through the data in the result set and display it.
-                rs.next();
-                m1 = new MedicalHistory(rs.getString("illness"), rs.getString("DoctorDetails"),
-                        rs.getString("medicine"), rs.getString("DosageAmount"), rs.getString("DosageFrequency"),
-                        rs.getDate("startDate"), rs.getDate("endDate"), rs.getTime("DosageTime"),
-                        rs.getBoolean("EmailNotification"));
-                return m1;
+                if (rs.next()) {
+                    // rs.next();
+                    m1 = new MedicalHistory(rs.getString("illness"), rs.getString("DoctorDetails"),
+                            rs.getString("medicine"), rs.getString("DosageAmount"), rs.getString("DosageFrequency"),
+                            rs.getDate("startDate"), rs.getDate("endDate"), rs.getTime("DosageTime"),
+                            rs.getBoolean("EmailNotification"));
+                    return m1;
+                } else {
+                    MedicalHistory m2 = new MedicalHistory("Relation not found");
+                    return m2;
+                }
             } else {
                 String SQL = "SELECT * FROM medicalhistory where id in(select did from relationship where id in(select id from registration where LoggedIn like true and relation like '"
                         + mItem.getRelation() + "'))";
                 ResultSet rs = stmt.executeQuery(SQL);
 
                 // Iterate through the data in the result set and display it.
-                rs.next();
-                m1 = new MedicalHistory(rs.getString("illness"), rs.getString("DoctorDetails"),
-                        rs.getString("medicine"), rs.getString("DosageAmount"), rs.getString("DosageFrequency"),
-                        rs.getDate("startDate"), rs.getDate("endDate"), rs.getTime("DosageTime"),
-                        rs.getBoolean("EmailNotification"));
-                return m1;
+                if (rs.next()) {
+                    // rs.next();
+                    m1 = new MedicalHistory(rs.getString("illness"), rs.getString("DoctorDetails"),
+                            rs.getString("medicine"), rs.getString("DosageAmount"), rs.getString("DosageFrequency"),
+                            rs.getDate("startDate"), rs.getDate("endDate"), rs.getTime("DosageTime"),
+                            rs.getBoolean("EmailNotification"));
+                    return m1;
+                } else {
+                    MedicalHistory m2 = new MedicalHistory("Relation not found");
+                    return m2;
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

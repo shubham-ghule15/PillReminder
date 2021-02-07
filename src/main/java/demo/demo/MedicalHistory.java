@@ -4,7 +4,7 @@ import java.sql.Date;
 import java.sql.Time;
 
 public class MedicalHistory {
-  private String illness, DoctorDetails, medicine, DosageAmount, DosageFrequency, relation;
+  private String illness, DoctorDetails, medicine, DosageAmount, DosageFrequency, relation, message;
   private Date startDate, endDate;
   private Time DosageTime;
   private Boolean EmailNotification;
@@ -21,6 +21,10 @@ public class MedicalHistory {
     this.endDate = endDate;
     this.DosageTime = DosageTime;
     this.EmailNotification = EmailNotification;
+  }
+
+  public MedicalHistory(String message) {
+    this.message = message;
   }
 
   public String getRelation() {
