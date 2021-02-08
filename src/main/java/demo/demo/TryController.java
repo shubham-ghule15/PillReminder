@@ -405,4 +405,35 @@ public class TryController {
 
     }
 
+    @CrossOrigin(origins = "*")
+    @RequestMapping(method = { RequestMethod.DELETE, RequestMethod.GET }, value = "/DeleteMedicalHistory")
+    @ResponseBody
+    public ResponseEntity<?> DeleteMedicalHistory(@RequestBody MedicalHistory mItem) {
+        // Create a variable for the connection string.
+        String connectionUrl = "jdbc:mysql://localhost:3307/final_project";
+        String user = "root";
+        String pass = "shubham07";
+
+        try (Connection con = DriverManager.getConnection(connectionUrl, user, pass);
+                Statement stmt = con.createStatement();) {
+
+            if (mItem.getRelation().equals("self")) {
+                String SQL = "Delete from medicalhistory where id in(select id from registration where LoggedIn like true) ";
+                stmt.executeUpdate(SQL);
+                return ResponseEntity.ok(new MessageResponse("Self Medical history Deleted Successfully!"));
+            } else {
+                String SQL = "Delete from medicalhistory where id in(select did from relationship where relation like '"
+                        + mItem.getRelation() + "' and id in(select id from registration where LoggedIn like true))   ";
+                stmt.executeUpdate(SQL);
+                return ResponseEntity.ok(new MessageResponse("Dependent Medical HistoryDeleted Successfully!"));
+            }
+
+        } // Handle any errors that may have occurred.
+        catch (SQLException e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new MessageResponse("Error!"));
+        }
+
+    }
+
 }
